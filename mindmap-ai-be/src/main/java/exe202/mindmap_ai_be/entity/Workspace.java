@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.sql.Timestamp;
@@ -14,9 +15,18 @@ import java.sql.Timestamp;
 public class Workspace {
 
     @Id
+    @Column("workspaceid")
     private Long workspaceId;
+
+    @Column("name")
     private String name;
+
+    @Column("description")
     private String description;
+
+    @Column("owerid")
     private Long owerId;
+
+    @Column("createdat")
     private Timestamp createdAt;
 }

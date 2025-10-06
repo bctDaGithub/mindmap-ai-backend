@@ -13,6 +13,6 @@ public interface UserService {
     Mono<User> createUser(User user);
     Mono<User> updateUser(Long id, User user);
     Mono<Void> deleteUser(Long id);
-    Mono<Void> getUserByEmail(String email);
+    Mono<User> getUserByEmail(String email);
 
 }
