@@ -8,6 +8,7 @@ public class MindmapAiBeApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MindmapAiBeApplication.class, args);
+
     }
 
 }

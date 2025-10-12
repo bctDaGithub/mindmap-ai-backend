@@ -43,23 +43,35 @@ public class SecurityConfig {
 
                 // Quy tắc phân quyền
                 .authorizeExchange(exchanges -> exchanges
-                        // public auth + swagger endpoints
-                        .pathMatchers(
-                                "/api/v1/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/webjars/**",
-                                "/swagger-resources/**"
-                        ).permitAll()
-
-                        // ví dụ endpoint admin
-                        .pathMatchers("/api/admin/**").hasAuthority("ADMIN")
-
-                        // các route còn lại require authenticated
-                        .anyExchange().authenticated()
+                        // PERMIT ALL - FOR TESTING ONLY
+                        .anyExchange().permitAll()
                 )
+//                .authorizeExchange(exchanges -> exchanges
+//                        // public auth + swagger endpoints
+//                        .pathMatchers(
+//                                "/api/v1/auth/**",
+//                                "/v3/api-docs/**",
+//                                "/swagger-ui/**",
+//                                "/swagger-ui.html",
+//                                "/webjars/**",
+//                                "/swagger-resources/**"
+//                        ).permitAll()
+//
+//                        // WebSocket endpoints
+//                        .pathMatchers("/ws/**").permitAll()
+//
+//                        // Public mindmap endpoints for testing
+//                        .pathMatchers("/api/mindmap/**").permitAll()
+//
+//                        // Public workspace endpoints for testing
+//                        .pathMatchers("/api/workspace/**", "/api/v1/workspaces/**").permitAll()
+//
+//                        // ví dụ endpoint admin
+//                        .pathMatchers("/api/admin/**").hasAuthority("ADMIN")
+//
+//                        // các route còn lại require authenticated
+//                        .anyExchange().authenticated()
+//                )
                 .build();
     }
 }
-

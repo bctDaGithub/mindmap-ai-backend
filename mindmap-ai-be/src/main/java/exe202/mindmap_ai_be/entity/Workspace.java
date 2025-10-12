@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 public class Workspace {
 
     @Id
-    @Column("workspaceid")
+    @Column("workspace_id")
     private Long workspaceId;
 
     @Column("name")
@@ -24,9 +24,9 @@ public class Workspace {
     @Column("description")
     private String description;
 
-    @Column("owerid")
-    private Long owerId;
+    @Column("owner_id")
+    private Long ownerId;
 
-    @Column("createdat")
+    @Column("created_at")
     private Timestamp createdAt;
 }

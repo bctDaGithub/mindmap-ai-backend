@@ -7,5 +7,5 @@ import reactor.core.publisher.Flux;
 
 @Repository
 public interface WorkspaceRepository extends ReactiveCrudRepository<Workspace,Long> {
-    Flux<Workspace> getWorkspacesByOwerId(Long owerId);
+    Flux<Workspace> findAllByOwnerId(Long ownerId);
 }
