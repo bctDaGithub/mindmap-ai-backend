@@ -24,7 +24,7 @@ public class GoogleAuthService {
                         Utils.getDefaultJsonFactory()
                 ).build()
         )
-                .setAudience(Collections.singletonList(google_client_id))
+                .setAudience(Collections.singletonList("925746768505-b4bs779ll0nodni160a5uifq0njpngtb.apps.googleusercontent.com"))
                 .build();
     }
 
