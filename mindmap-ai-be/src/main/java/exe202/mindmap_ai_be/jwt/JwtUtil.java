@@ -37,5 +37,20 @@ public class JwtUtil {
             return Mono.error(new RuntimeException("Invalid JWT token", e));
         }
     }
+
+    public String extractEmail(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(jwtSecret)
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.getSubject(); // subject là email
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid JWT token", e);
+        }
+    }
+
+
+
 }
 
