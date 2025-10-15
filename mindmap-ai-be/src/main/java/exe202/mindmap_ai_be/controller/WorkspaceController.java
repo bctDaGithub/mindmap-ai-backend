@@ -3,6 +3,7 @@ package exe202.mindmap_ai_be.controller;
 import exe202.mindmap_ai_be.dto.request.CreateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.request.UpdateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.response.WorkspaceResponse;
+import exe202.mindmap_ai_be.entity.WorkspaceMember;
 import exe202.mindmap_ai_be.service.WorkspaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -72,5 +73,44 @@ public class WorkspaceController {
             @Parameter(description = "ID workspace") @PathVariable Long id,
             @Parameter(description = "ID người dùng") @RequestParam(required = false, defaultValue = "1") Long userId) {
         return workspaceService.deleteWorkspace(id, userId);
+    }
+
+    // ============= Collaboration Endpoints =============
+
+    @PostMapping("/{workspaceId}/invite")
+    @Operation(summary = "Mời người dùng vào workspace", description = "Owner mời người dùng khác để cùng cộng tác trong workspace")
+    public Mono<Void> inviteUserToWorkspace(
+            @Parameter(description = "ID workspace") @PathVariable Long workspaceId,
+            @Parameter(description = "ID người dùng được mời") @RequestParam Long targetUserId,
+            @Parameter(description = "Quyền: EDIT hoặc VIEW_ONLY") @RequestParam String permission,
+            @Parameter(description = "ID owner") @RequestParam Long ownerId) {
+        return workspaceService.inviteUserToWorkspace(workspaceId, targetUserId, permission, ownerId);
+    }
+
+    @GetMapping("/{workspaceId}/members")
+    @Operation(summary = "Lấy danh sách thành viên workspace", description = "Xem tất cả thành viên đang cộng tác trong workspace")
+    public Flux<WorkspaceMember> getWorkspaceMembers(
+            @Parameter(description = "ID workspace") @PathVariable Long workspaceId) {
+        return workspaceService.getWorkspaceMembers(workspaceId);
+    }
+
+    @PutMapping("/{workspaceId}/members/{userId}/permission")
+    @Operation(summary = "Cập nhật quyền thành viên", description = "Owner cập nhật quyền của thành viên trong workspace")
+    public Mono<Void> updateWorkspaceMemberPermission(
+            @Parameter(description = "ID workspace") @PathVariable Long workspaceId,
+            @Parameter(description = "ID thành viên") @PathVariable Long userId,
+            @Parameter(description = "Quyền mới: EDIT hoặc VIEW_ONLY") @RequestParam String permission,
+            @Parameter(description = "ID owner") @RequestParam Long ownerId) {
+        return workspaceService.updateWorkspaceMemberPermission(workspaceId, userId, permission, ownerId);
+    }
+
+    @DeleteMapping("/{workspaceId}/members/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Xóa thành viên khỏi workspace", description = "Owner xóa một thành viên ra khỏi workspace")
+    public Mono<Void> removeWorkspaceMember(
+            @Parameter(description = "ID workspace") @PathVariable Long workspaceId,
+            @Parameter(description = "ID thành viên") @PathVariable Long userId,
+            @Parameter(description = "ID owner") @RequestParam Long ownerId) {
+        return workspaceService.removeWorkspaceMember(workspaceId, userId, ownerId);
     }
 }

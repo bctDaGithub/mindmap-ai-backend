@@ -6,10 +6,13 @@ import exe202.mindmap_ai_be.dto.response.MindmapResponse;
 import exe202.mindmap_ai_be.entity.Edge;
 import exe202.mindmap_ai_be.entity.Mindmap;
 import exe202.mindmap_ai_be.entity.Node;
+import exe202.mindmap_ai_be.entity.UserMindmapPermission;
+import exe202.mindmap_ai_be.entity.enums.MindmapPermission;
 import exe202.mindmap_ai_be.entity.enums.Shape;
 import exe202.mindmap_ai_be.repository.EdgeRepository;
 import exe202.mindmap_ai_be.repository.MindmapRepository;
 import exe202.mindmap_ai_be.repository.NodeRepository;
+import exe202.mindmap_ai_be.repository.UserMindmapPermissionRepository;
 import exe202.mindmap_ai_be.service.MindmapService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +29,7 @@ public class MindmapServiceImpl implements MindmapService {
     private final MindmapRepository mindmapRepository;
     private final NodeRepository nodeRepository;
     private final EdgeRepository edgeRepository;
+    private final UserMindmapPermissionRepository userMindmapPermissionRepository;
 
     // ============= Mindmap CRUD Implementation =============
 
@@ -219,6 +223,97 @@ public class MindmapServiceImpl implements MindmapService {
                 .flatMap(edge -> {
                     edge.setLabel(label);
                     return edgeRepository.save(edge);
+                });
+    }
+
+    // ============= Collaboration Operations Implementation =============
+
+    @Override
+    public Mono<Void> inviteUserToMindmap(Long mindmapId, Long targetUserId, String permission, Long ownerId) {
+        return mindmapRepository.findById(mindmapId)
+                .flatMap(mindmap -> {
+                    // Check if requester is the owner
+                    if (!mindmap.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can invite users to mindmap"));
+                    }
+
+                    // Check if user already has permission
+                    return userMindmapPermissionRepository.findByMindmapIdAndUserId(mindmapId, targetUserId)
+                            .hasElement()
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return Mono.error(new RuntimeException("User already has permission to this mindmap"));
+                                }
+
+                                // Create new permission
+                                UserMindmapPermission newPermission = new UserMindmapPermission();
+                                newPermission.setMindmapId(mindmapId);
+                                newPermission.setUserId(targetUserId);
+
+                                // Parse permission string to enum
+                                MindmapPermission permEnum;
+                                if ("WRITE".equalsIgnoreCase(permission)) {
+                                    permEnum = MindmapPermission.WRITE;
+                                } else if ("READ".equalsIgnoreCase(permission)) {
+                                    permEnum = MindmapPermission.READ;
+                                } else {
+                                    permEnum = MindmapPermission.READ; // Default to READ
+                                }
+                                newPermission.setPermission(permEnum);
+
+                                return userMindmapPermissionRepository.save(newPermission).then();
+                            });
+                });
+    }
+
+    @Override
+    public Flux<UserMindmapPermission> getMindmapMembers(Long mindmapId) {
+        return userMindmapPermissionRepository.findByMindmapId(mindmapId);
+    }
+
+    @Override
+    public Mono<Void> updateMindmapMemberPermission(Long mindmapId, Long userId, String permission, Long ownerId) {
+        return mindmapRepository.findById(mindmapId)
+                .flatMap(mindmap -> {
+                    // Check if requester is the owner
+                    if (!mindmap.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can update permissions"));
+                    }
+
+                    return userMindmapPermissionRepository.findByMindmapIdAndUserId(mindmapId, userId)
+                            .switchIfEmpty(Mono.error(new RuntimeException("User does not have permission to this mindmap")))
+                            .flatMap(existingPermission -> {
+                                // Update permission
+                                MindmapPermission permEnum;
+                                if ("WRITE".equalsIgnoreCase(permission)) {
+                                    permEnum = MindmapPermission.WRITE;
+                                } else if ("READ".equalsIgnoreCase(permission)) {
+                                    permEnum = MindmapPermission.READ;
+                                } else {
+                                    permEnum = MindmapPermission.READ; // Default to READ
+                                }
+                                existingPermission.setPermission(permEnum);
+
+                                return userMindmapPermissionRepository.save(existingPermission).then();
+                            });
+                });
+    }
+
+    @Override
+    public Mono<Void> removeMindmapMember(Long mindmapId, Long userId, Long ownerId) {
+        return mindmapRepository.findById(mindmapId)
+                .flatMap(mindmap -> {
+                    // Check if requester is the owner
+                    if (!mindmap.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can remove members"));
+                    }
+
+                    // Cannot remove owner
+                    if (mindmap.getOwnerId().equals(userId)) {
+                        return Mono.error(new RuntimeException("Cannot remove owner from mindmap"));
+                    }
+
+                    return userMindmapPermissionRepository.deleteByMindmapIdAndUserId(mindmapId, userId);
                 });
     }
 

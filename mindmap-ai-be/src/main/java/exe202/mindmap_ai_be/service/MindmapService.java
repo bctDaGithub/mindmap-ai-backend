@@ -6,6 +6,7 @@ import exe202.mindmap_ai_be.dto.response.MindmapResponse;
 import exe202.mindmap_ai_be.entity.Edge;
 import exe202.mindmap_ai_be.entity.Mindmap;
 import exe202.mindmap_ai_be.entity.Node;
+import exe202.mindmap_ai_be.entity.UserMindmapPermission;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,4 +44,10 @@ public interface MindmapService {
 
     // Edge specific updates
     Mono<Edge> updateEdgeLabel(Long edgeId, String label);
+
+    // ============= Collaboration operations =============
+    Mono<Void> inviteUserToMindmap(Long mindmapId, Long targetUserId, String permission, Long ownerId);
+    Flux<UserMindmapPermission> getMindmapMembers(Long mindmapId);
+    Mono<Void> updateMindmapMemberPermission(Long mindmapId, Long userId, String permission, Long ownerId);
+    Mono<Void> removeMindmapMember(Long mindmapId, Long userId, Long ownerId);
 }

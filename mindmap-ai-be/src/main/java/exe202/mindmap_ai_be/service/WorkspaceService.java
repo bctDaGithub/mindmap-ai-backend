@@ -4,6 +4,7 @@ import exe202.mindmap_ai_be.dto.request.CreateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.request.UpdateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.response.WorkspaceResponse;
 import exe202.mindmap_ai_be.entity.Workspace;
+import exe202.mindmap_ai_be.entity.WorkspaceMember;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -20,4 +21,10 @@ public interface WorkspaceService {
 
     // Entity access for internal use
     Mono<Workspace> getWorkspaceEntityById(Long id);
+
+    // ============= Collaboration operations =============
+    Mono<Void> inviteUserToWorkspace(Long workspaceId, Long targetUserId, String permission, Long ownerId);
+    Flux<WorkspaceMember> getWorkspaceMembers(Long workspaceId);
+    Mono<Void> updateWorkspaceMemberPermission(Long workspaceId, Long userId, String permission, Long ownerId);
+    Mono<Void> removeWorkspaceMember(Long workspaceId, Long userId, Long ownerId);
 }

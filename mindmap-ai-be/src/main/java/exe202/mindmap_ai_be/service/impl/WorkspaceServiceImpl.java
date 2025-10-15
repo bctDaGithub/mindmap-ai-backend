@@ -4,6 +4,9 @@ import exe202.mindmap_ai_be.dto.request.CreateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.request.UpdateWorkspaceRequest;
 import exe202.mindmap_ai_be.dto.response.WorkspaceResponse;
 import exe202.mindmap_ai_be.entity.Workspace;
+import exe202.mindmap_ai_be.entity.WorkspaceMember;
+import exe202.mindmap_ai_be.entity.enums.WorkspacePermission;
+import exe202.mindmap_ai_be.repository.WorkspaceMemberRepository;
 import exe202.mindmap_ai_be.repository.WorkspaceRepository;
 import exe202.mindmap_ai_be.service.WorkspaceService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.time.Instant;
 public class WorkspaceServiceImpl implements WorkspaceService {
 
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
     @Override
     public Mono<WorkspaceResponse> createWorkspace(CreateWorkspaceRequest request, Long ownerId) {
@@ -78,6 +82,97 @@ public class WorkspaceServiceImpl implements WorkspaceService {
     public Flux<WorkspaceResponse> getWorkspacesByOwnerId(Long ownerId) {
         return workspaceRepository.findAllByOwnerId(ownerId)
                 .map(this::toWorkspaceResponse);
+    }
+
+    // ============= Collaboration Operations Implementation =============
+
+    @Override
+    public Mono<Void> inviteUserToWorkspace(Long workspaceId, Long targetUserId, String permission, Long ownerId) {
+        return workspaceRepository.findById(workspaceId)
+                .flatMap(workspace -> {
+                    // Check if requester is the owner
+                    if (!workspace.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can invite users to workspace"));
+                    }
+
+                    // Check if user already has membership
+                    return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, targetUserId)
+                            .hasElement()
+                            .flatMap(exists -> {
+                                if (exists) {
+                                    return Mono.error(new RuntimeException("User is already a member of this workspace"));
+                                }
+
+                                // Create new member
+                                WorkspaceMember newMember = new WorkspaceMember();
+                                newMember.setWorkspaceId(workspaceId);
+                                newMember.setUserId(targetUserId);
+
+                                // Parse permission string to enum
+                                WorkspacePermission permEnum;
+                                if ("EDIT".equalsIgnoreCase(permission)) {
+                                    permEnum = WorkspacePermission.EDIT;
+                                } else if ("VIEW_ONLY".equalsIgnoreCase(permission) || "VIEW".equalsIgnoreCase(permission)) {
+                                    permEnum = WorkspacePermission.VIEW_ONLY;
+                                } else {
+                                    permEnum = WorkspacePermission.VIEW_ONLY; // Default to VIEW_ONLY
+                                }
+                                newMember.setWorkspacePermission(permEnum);
+
+                                return workspaceMemberRepository.save(newMember).then();
+                            });
+                });
+    }
+
+    @Override
+    public Flux<WorkspaceMember> getWorkspaceMembers(Long workspaceId) {
+        return workspaceMemberRepository.findByWorkspaceId(workspaceId);
+    }
+
+    @Override
+    public Mono<Void> updateWorkspaceMemberPermission(Long workspaceId, Long userId, String permission, Long ownerId) {
+        return workspaceRepository.findById(workspaceId)
+                .flatMap(workspace -> {
+                    // Check if requester is the owner
+                    if (!workspace.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can update permissions"));
+                    }
+
+                    return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
+                            .switchIfEmpty(Mono.error(new RuntimeException("User is not a member of this workspace")))
+                            .flatMap(existingMember -> {
+                                // Update permission
+                                WorkspacePermission permEnum;
+                                if ("EDIT".equalsIgnoreCase(permission)) {
+                                    permEnum = WorkspacePermission.EDIT;
+                                } else if ("VIEW_ONLY".equalsIgnoreCase(permission) || "VIEW".equalsIgnoreCase(permission)) {
+                                    permEnum = WorkspacePermission.VIEW_ONLY;
+                                } else {
+                                    permEnum = WorkspacePermission.VIEW_ONLY; // Default to VIEW_ONLY
+                                }
+                                existingMember.setWorkspacePermission(permEnum);
+
+                                return workspaceMemberRepository.save(existingMember).then();
+                            });
+                });
+    }
+
+    @Override
+    public Mono<Void> removeWorkspaceMember(Long workspaceId, Long userId, Long ownerId) {
+        return workspaceRepository.findById(workspaceId)
+                .flatMap(workspace -> {
+                    // Check if requester is the owner
+                    if (!workspace.getOwnerId().equals(ownerId)) {
+                        return Mono.error(new RuntimeException("Only owner can remove members"));
+                    }
+
+                    // Cannot remove owner
+                    if (workspace.getOwnerId().equals(userId)) {
+                        return Mono.error(new RuntimeException("Cannot remove owner from workspace"));
+                    }
+
+                    return workspaceMemberRepository.deleteByWorkspaceIdAndUserId(workspaceId, userId);
+                });
     }
 
     // Helper method

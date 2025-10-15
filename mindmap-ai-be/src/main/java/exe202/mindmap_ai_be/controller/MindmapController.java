@@ -5,6 +5,7 @@ import exe202.mindmap_ai_be.dto.request.UpdateMindmapRequest;
 import exe202.mindmap_ai_be.dto.response.MindmapResponse;
 import exe202.mindmap_ai_be.entity.Edge;
 import exe202.mindmap_ai_be.entity.Node;
+import exe202.mindmap_ai_be.entity.UserMindmapPermission;
 import exe202.mindmap_ai_be.service.MindmapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -211,5 +212,42 @@ public class MindmapController {
     public Mono<Void> deleteEdge(
             @Parameter(description = "Edge ID") @PathVariable Long edgeId) {
         return mindmapService.deleteEdge(edgeId);
+    }
+
+    // ============= Collaboration Endpoints =============
+
+    @PostMapping("/{mindmapId}/invite")
+    @Operation(summary = "Invite user to mindmap", description = "Owner invites a user to collaborate on a mindmap")
+    public Mono<Void> inviteUserToMindmap(
+            @PathVariable Long mindmapId,
+            @RequestParam Long targetUserId,
+            @RequestParam String permission,
+            @RequestParam Long ownerId) {
+        return mindmapService.inviteUserToMindmap(mindmapId, targetUserId, permission, ownerId);
+    }
+
+    @GetMapping("/{mindmapId}/members")
+    @Operation(summary = "Get mindmap members", description = "Get all members collaborating on a mindmap")
+    public Flux<UserMindmapPermission> getMindmapMembers(@PathVariable Long mindmapId) {
+        return mindmapService.getMindmapMembers(mindmapId);
+    }
+
+    @PutMapping("/{mindmapId}/members/{userId}/permission")
+    @Operation(summary = "Update mindmap member permission", description = "Owner updates a member's permission")
+    public Mono<Void> updateMindmapMemberPermission(
+            @PathVariable Long mindmapId,
+            @PathVariable Long userId,
+            @RequestParam String permission,
+            @RequestParam Long ownerId) {
+        return mindmapService.updateMindmapMemberPermission(mindmapId, userId, permission, ownerId);
+    }
+
+    @DeleteMapping("/{mindmapId}/members/{userId}")
+    @Operation(summary = "Remove member from mindmap", description = "Owner removes a member from the mindmap")
+    public Mono<Void> removeMindmapMember(
+            @PathVariable Long mindmapId,
+            @PathVariable Long userId,
+            @RequestParam Long ownerId) {
+        return mindmapService.removeMindmapMember(mindmapId, userId, ownerId);
     }
 }
