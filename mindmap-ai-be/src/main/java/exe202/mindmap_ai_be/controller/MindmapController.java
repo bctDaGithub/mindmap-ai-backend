@@ -18,7 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/mindmap")
+@RequestMapping("/api/v1/mindmap")
 @RequiredArgsConstructor
 @Tag(name = "Mindmap Real-time Collaboration", description = "APIs for real-time mindmap collaboration with WebSocket support")
 public class MindmapController {

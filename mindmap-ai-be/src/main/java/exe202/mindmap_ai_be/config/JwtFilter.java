@@ -33,16 +33,22 @@ public class JwtFilter implements WebFilter {
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
+        // Không có token => cho qua (public route)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange); // không có token => cho qua (public route)
+            return chain.filter(exchange);
         }
 
         String token = authHeader.substring(7);
+
+        // Validate token và authenticate, nếu lỗi thì CHO QUA thay vì trả 401
+        // SecurityConfig sẽ quyết định có cần authentication hay không
         return jwtUtil.validateAndGetClaims(token)
                 .flatMap(claims -> handleAuthentication(exchange, chain, claims))
                 .onErrorResume(e -> {
-                    exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    return exchange.getResponse().setComplete();
+                    // Token invalid/expired => CHỈ LOG, KHÔNG TRẢ 401
+                    // Để SecurityConfig quyết định dựa trên permitAll() hay authenticated()
+                    System.out.println("JWT validation failed: " + e.getMessage());
+                    return chain.filter(exchange); // CHO QUA thay vì trả 401
                 });
     }
 
