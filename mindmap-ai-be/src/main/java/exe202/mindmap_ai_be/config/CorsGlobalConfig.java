@@ -15,7 +15,7 @@ public class CorsGlobalConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "https://dazzling-perfection-production-7d53.up.railway.app")); // frontend
+        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "https://dazzling-perfection-production-7d53.up.railway.app", "https://mindmap-ai-frontend.vercel.app")); // frontend
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization", "Content-Type"));
