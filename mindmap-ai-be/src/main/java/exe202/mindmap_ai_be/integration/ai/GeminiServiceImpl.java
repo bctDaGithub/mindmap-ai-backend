@@ -21,7 +21,7 @@ public class GeminiServiceImpl implements GeminiService {
             String fullPrompt = systemPrompt + "\n\nUser request: " + prompt;
 
             GenerateContentResponse response = client.models.generateContent(
-                    "gemini-2.0-flash-exp",
+                    "gemini-1.5-flash",
                     fullPrompt,
                     null
             );
